@@ -74,11 +74,12 @@ func MakeTestQueryResponse() retrievalmarket.QueryResponse {
 
 // MakeTestDealProposal generates a valid, random DealProposal
 func MakeTestDealProposal() retrievalmarket.DealProposal {
-	cid := testutil.GenerateCids(1)[0]
+	cids := testutil.GenerateCids(2)
 	return retrievalmarket.DealProposal{
-		PieceCID: cid.Bytes(),
+		PieceCID: cids[0].Bytes(),
 		ID:       retrievalmarket.DealID(rand.Uint64()),
 		Params: retrievalmarket.Params{
+			PayloadCID:              cids[1],
 			PricePerByte:            MakeTestTokenAmount(),
 			PaymentInterval:         rand.Uint64(),
 			PaymentIntervalIncrease: rand.Uint64(),
