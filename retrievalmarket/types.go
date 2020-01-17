@@ -3,13 +3,13 @@ package retrievalmarket
 import (
 	"context"
 	"errors"
+	"io"
 	"math/big"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-fil-markets/shared/tokenamount"
 	"github.com/filecoin-project/go-fil-markets/shared/types"
 	"github.com/ipfs/go-cid"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
@@ -193,8 +193,7 @@ type RetrievalProvider interface {
 
 // RetrievalProviderNode are the node depedencies for a RetrevalProvider
 type RetrievalProviderNode interface {
-	GetPieceSize(pieceCid []byte) (uint64, error)
-	SealedBlockstore(approveUnseal func() error) blockstore.Blockstore
+	UnsealSector(ctx context.Context, sectorId uint64, offset uint64, length uint64) (io.ReadCloser, error)
 	SavePaymentVoucher(ctx context.Context, paymentChannel address.Address, voucher *types.SignedVoucher, proof []byte, expectedAmount tokenamount.TokenAmount) (tokenamount.TokenAmount, error)
 }
 

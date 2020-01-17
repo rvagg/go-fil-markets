@@ -13,9 +13,10 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-cbor-util"
+	cborutil "github.com/filecoin-project/go-cbor-util"
 	"github.com/filecoin-project/go-data-transfer"
 	"github.com/filecoin-project/go-fil-markets/pieceio"
+	"github.com/filecoin-project/go-fil-markets/piecestore"
 	"github.com/filecoin-project/go-fil-markets/shared/tokenamount"
 	"github.com/filecoin-project/go-fil-markets/shared/types"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
@@ -40,7 +41,8 @@ type Provider struct {
 
 	spn storagemarket.StorageProviderNode
 
-	pio pieceio.PieceIO
+	pio        pieceio.PieceIO
+	pieceStore piecestore.PieceStore
 
 	// dataTransfer is the manager of data transfers used by this storage provider
 	dataTransfer datatransfer.Manager
@@ -70,7 +72,7 @@ var (
 	ErrDataTransferFailed = errors.New("deal data transfer failed")
 )
 
-func NewProvider(ds datastore.Batching, pio pieceio.PieceIO, dataTransfer datatransfer.Manager, spn storagemarket.StorageProviderNode) (storagemarket.StorageProvider, error) {
+func NewProvider(ds datastore.Batching, pio pieceio.PieceIO, pieceStore piecestore.PieceStore, dataTransfer datatransfer.Manager, spn storagemarket.StorageProviderNode) (storagemarket.StorageProvider, error) {
 	addr, err := ds.Get(datastore.NewKey("miner-address"))
 	if err != nil {
 		return nil, err
@@ -82,6 +84,7 @@ func NewProvider(ds datastore.Batching, pio pieceio.PieceIO, dataTransfer datatr
 
 	h := &Provider{
 		pio:          pio,
+		pieceStore:   pieceStore,
 		dataTransfer: dataTransfer,
 		spn:          spn,
 
@@ -197,7 +200,7 @@ func (p *Provider) onUpdated(ctx context.Context, update minerDealUpdate) {
 	case storagemarket.DealStaged:
 		p.handle(ctx, deal, p.staged, storagemarket.DealSealing)
 	case storagemarket.DealSealing:
-		p.handle(ctx, deal, p.sealing, storagemarket.DealComplete)
+		p.handle(ctx, deal, p.sealing, storagemarket.DealNoUpdate)
 	case storagemarket.DealComplete:
 		p.handle(ctx, deal, p.complete, storagemarket.DealNoUpdate)
 	}
